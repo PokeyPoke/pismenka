@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Písmenka – psací písmena hravě</title>
+  <meta name="description" content="A cute, fast game for kids to learn to read Czech handwritten (script) letters.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✏️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playwrite+CZ&family=Baloo+2:wght@600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="sky" aria-hidden="true"></div>
+
+  <button id="langBtn" class="corner-btn" aria-label="Language">EN</button>
+
+  <!-- START SCREEN -->
+  <section id="start" class="screen active">
+    <div class="mascot-wrap"><svg class="mascot" viewBox="0 0 200 180" aria-hidden="true"></svg></div>
+    <h1 class="title"><span>P</span><span>í</span><span>s</span><span>m</span><span>e</span><span>n</span><span>k</span><span>a</span></h1>
+    <p class="subtitle" data-t="subtitle"></p>
+    <div class="preview script" aria-hidden="true">Aa Čč Řř</div>
+
+    <div class="options">
+      <div class="opt-group">
+        <span class="opt-label" data-t="letters"></span>
+        <div class="seg" data-opt="case">
+          <button data-val="lower" data-t="lower"></button>
+          <button data-val="upper" data-t="upper"></button>
+          <button data-val="both" data-t="both"></button>
+        </div>
+      </div>
+      <div class="opt-group">
+        <button class="toggle" data-opt="accents"><span class="tick"></span><span data-t="accents"></span></button>
+        <button class="toggle" data-opt="speak"><span class="tick"></span><span data-t="speak"></span></button>
+        <button class="toggle" data-opt="keyboard"><span class="tick"></span><span data-t="keyboard"></span></button>
+      </div>
+    </div>
+
+    <button id="playBtn" class="big-btn" data-t="play"></button>
+    <p class="hint" data-t="pressSpace"></p>
+    <p class="best" id="bestStart"></p>
+  </section>
+
+  <!-- COUNTDOWN -->
+  <section id="countdown" class="screen">
+    <div class="count-num" id="countNum">3</div>
+  </section>
+
+  <!-- GAME SCREEN -->
+  <section id="game" class="screen">
+    <div class="hud">
+      <div class="timer">
+        <svg viewBox="0 0 100 100">
+          <circle class="timer-bg" cx="50" cy="50" r="44"/>
+          <circle class="timer-fg" id="timerRing" cx="50" cy="50" r="44"/>
+        </svg>
+        <span id="timeLeft">20</span>
+      </div>
+      <div class="score-box">
+        <span class="star-icon">⭐</span><span id="score">0</span>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="mascot-wrap small"><svg class="mascot" viewBox="0 0 200 180" aria-hidden="true"></svg></div>
+      <div class="card" id="card">
+        <div class="letter script" id="letter">a</div>
+        <div class="reveal" id="reveal"></div>
+      </div>
+      <p class="prompt" data-t="prompt"></p>
+    </div>
+
+    <div class="osk" id="osk"></div>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="results" class="screen">
+    <div class="mascot-wrap"><svg class="mascot" viewBox="0 0 200 180" aria-hidden="true"></svg></div>
+    <h2 class="result-title" id="resultTitle"></h2>
+    <div class="big-score"><span id="finalScore">0</span><small data-t="letters2"></small></div>
+    <div class="rating" id="rating"><span>★</span><span>★</span><span>★</span></div>
+    <p class="record" id="record" data-t="record"></p>
+    <div class="practice" id="practice">
+      <p data-t="practice"></p>
+      <div class="pairs" id="pairs"></div>
+    </div>
+    <div class="row">
+      <button id="againBtn" class="big-btn" data-t="again"></button>
+      <button id="menuBtn" class="big-btn alt" data-t="menu"></button>
+    </div>
+    <p class="hint" data-t="pressSpace"></p>
+  </section>
+
+  <div id="fx" aria-hidden="true"></div>
+
+  <script src="game.js"></script>
+</body>
+</html>
