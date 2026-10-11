@@ -20,7 +20,11 @@ html, body {
   font-family: var(--ui);
   color: var(--ink);
   -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
   user-select: none;
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation; /* no double-tap zoom on fast taps */
+  overscroll-behavior: none;
 }
 
 body {
@@ -57,11 +61,16 @@ body {
   display: none;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 14px;
   padding: 20px;
   text-align: center;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
+/* centre the content when it fits, scroll from the top when it doesn't */
+.screen > :first-child { margin-top: auto; }
+.screen > :last-child { margin-bottom: auto; }
 .screen.active { display: flex; animation: screenIn .45s cubic-bezier(.2, 1.4, .4, 1); }
 @keyframes screenIn {
   from { opacity: 0; transform: scale(.9); }
@@ -220,7 +229,8 @@ body {
 }
 
 /* game */
-#game { justify-content: flex-start; padding-top: 16px; }
+#game { padding-top: 16px; overflow: hidden; }
+#game > :first-child, #game > :last-child { margin: 0; }
 .hud {
   width: min(720px, 100%);
   display: flex;
@@ -240,6 +250,7 @@ body {
 
 .stage {
   flex: 1;
+  min-height: 0;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -251,8 +262,11 @@ body {
 .card {
   --c: var(--purple);
   position: relative;
-  width: min(360px, 78vw);
-  height: min(360px, 52vh);
+  flex: 0 1 auto;
+  width: min(360px, 86vw);
+  height: min(360px, 86vw);
+  max-height: 100%;
+  min-height: 0;
   background:
     repeating-linear-gradient(180deg, transparent 0 59px, rgba(63, 167, 255, .18) 59px 61px),
     var(--card);
@@ -264,10 +278,9 @@ body {
   overflow: hidden;
 }
 .letter {
-  font-size: min(190px, 30vh);
+  font-size: min(190px, 40vw);
   line-height: 1;
   color: var(--c);
-  padding-bottom: .15em; /* Playwrite sits high; nudge it optically */
 }
 .card.in { animation: cardIn .4s cubic-bezier(.2, 1.6, .4, 1); }
 .card.out { animation: cardOut .25s ease-in forwards; }
@@ -297,10 +310,10 @@ body {
   transition: transform .3s cubic-bezier(.2, 1.6, .4, 1);
 }
 .reveal.show { transform: scale(1); }
-.prompt { margin: 0; font-size: clamp(20px, 3vw, 26px); font-weight: 700; }
+.prompt { margin: 0; font-size: clamp(18px, 3vw, 26px); font-weight: 700; flex-shrink: 0; }
 
 /* on-screen keyboard */
-.osk { display: none; flex-direction: column; gap: 6px; padding-bottom: 8px; width: min(820px, 100%); }
+.osk { display: none; flex-direction: column; gap: 6px; padding-bottom: 8px; width: min(820px, 100%); flex-shrink: 0; }
 .osk.show { display: flex; }
 .osk-row { display: flex; justify-content: center; gap: 5px; }
 .osk button {
@@ -354,6 +367,91 @@ body {
 @media (max-height: 640px) {
   .mascot-wrap { width: 100px; height: 90px; }
   .preview { display: none; }
+}
+
+/* phones (iPhone 8 is 375 × ~550 in Safari) */
+@media (max-width: 500px), (max-height: 500px) {
+  .screen { gap: 10px; padding: 12px; }
+  .title { font-size: 52px; }
+  .subtitle { font-size: 17px; line-height: 1.2; }
+  .options { padding: 10px; gap: 8px; }
+  .opt-label { font-size: 16px; }
+  .seg button, .toggle { font-size: 15px; padding: 5px 11px; }
+  .toggle .tick { width: 18px; height: 18px; border-width: 2px; font-size: 11px; }
+  .big-btn { font-size: 26px; padding: 8px 36px; }
+  .corner-btn { top: 10px; right: 10px; font-size: 15px; padding: 4px 12px; }
+
+  #game { padding: 10px 6px 0; gap: 10px; }
+  .score-box { font-size: 30px; padding: 0 18px 0 10px; }
+  .stage { gap: 8px; }
+  .card { border-width: 6px; border-radius: 30px; }
+  .reveal { font-size: 26px; }
+  .osk { gap: 5px; }
+  .osk-row { gap: 3px; }
+  .osk button { height: 46px; font-size: 22px; border-radius: 10px; }
+
+  .result-title { font-size: 40px; }
+  .big-score { padding: 2px 36px 8px; border-radius: 28px; }
+  .big-score span { font-size: 64px; }
+  .big-score small { font-size: 18px; }
+  .rating { font-size: 44px; }
+  .record { font-size: 20px; }
+  .pair .s { font-size: 26px; }
+  .pair .p { font-size: 22px; }
+}
+
+@media (max-width: 500px) and (max-height: 700px) {
+  .results-mascot { display: none; }
+  .big-score span { font-size: 56px; }
+  .rating { font-size: 38px; }
+  .pair { padding: 0 10px 4px; }
+}
+
+/* phone on its side: letter on the left, keyboard on the right */
+@media (orientation: landscape) and (max-height: 500px) {
+  .title { font-size: 40px; }
+  .subtitle, .best:empty { display: none; }
+  .mascot-wrap { width: 70px; height: 62px; }
+  .screen { gap: 8px; }
+  .results-mascot { display: none; }
+  #game.with-osk.active {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    align-items: center;
+    padding: 8px 52px 8px 10px;
+  }
+  #game.with-osk .hud { grid-column: 1; grid-row: 1; }
+  #game.with-osk .stage { grid-column: 1; grid-row: 2; height: 100%; }
+  #game.with-osk .card { width: 100%; max-width: 300px; }
+  #game.with-osk .prompt { display: none; }
+  #game.with-osk .osk { grid-column: 2; grid-row: 1 / 3; padding: 0; }
+
+  /* results in two columns: score on the left, practice + buttons on the right */
+  #results.active {
+    display: grid;
+    grid-template-columns: auto auto;
+    justify-content: center;
+    align-content: center;
+    justify-items: center;
+    column-gap: 32px;
+    row-gap: 6px;
+  }
+  #results > * { margin: 0; }
+  #results .result-title { grid-column: 1; grid-row: 1; font-size: 32px; }
+  #results .big-score { grid-column: 1; grid-row: 2; }
+  #results .big-score span { font-size: 52px; }
+  #results .rating { grid-column: 1; grid-row: 3; font-size: 34px; }
+  #results .record { grid-column: 1; grid-row: 4; font-size: 18px; }
+  #results .practice { grid-column: 2; grid-row: 1 / 3; align-self: end; }
+  #results .row { grid-column: 2; grid-row: 3 / 5; align-self: start; }
+  #results .big-btn { font-size: 22px; padding: 6px 26px; }
+  .osk button { height: 42px; }
+}
+
+/* no space bar on a touch screen */
+@media (hover: none) and (pointer: coarse) {
+  .hint { display: none; }
 }
 @media (max-width: 700px) {
   .mascot-wrap.small { display: none; }

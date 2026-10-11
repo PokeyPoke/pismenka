@@ -258,6 +258,7 @@
       osk.appendChild(row);
     });
     osk.classList.toggle('show', !!settings.keyboard);
+    $('#game').classList.toggle('with-osk', !!settings.keyboard);
   }
 
   // ---------- game ----------
@@ -290,9 +291,15 @@
     const m = measure.measureText(el.textContent);
     const inkW = m.actualBoundingBoxLeft + m.actualBoundingBoxRight;
     const inkH = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
-    const shift = m.width / 2 - (m.actualBoundingBoxRight - m.actualBoundingBoxLeft) / 2;
-    const scale = Math.min(1, (card.clientWidth * 0.8) / inkW, (card.clientHeight * 0.8) / inkH);
-    el.style.transform = `scale(${scale}) translateX(${shift}px)`;
+    const shiftX = m.width / 2 - (m.actualBoundingBoxRight - m.actualBoundingBoxLeft) / 2;
+    // with line-height 1 the font's ascent+descent is centred in the line box;
+    // move the ink's middle (not the baseline) to the middle of the element
+    const size = parseFloat(cs.fontSize);
+    const baseline = (size - m.fontBoundingBoxAscent - m.fontBoundingBoxDescent) / 2 + m.fontBoundingBoxAscent;
+    const inkMid = baseline + (m.actualBoundingBoxDescent - m.actualBoundingBoxAscent) / 2;
+    const shiftY = size / 2 - inkMid;
+    const scale = Math.min(1, (card.clientWidth * 0.8) / inkW, (card.clientHeight * 0.78) / inkH);
+    el.style.transform = `scale(${scale}) translate(${shiftX}px, ${shiftY}px)`;
   }
 
   function nextLetter() {
@@ -317,6 +324,8 @@
 
   function startCountdown() {
     ctx();
+    // iOS only lets speech start from a tap, so prime it here
+    if (settings.speak && window.speechSynthesis) speechSynthesis.speak(new SpeechSynthesisUtterance(''));
     state.pool = makePool();
     buildKeyboard();
     show('countdown');
@@ -445,6 +454,11 @@
   // Buttons keep focus after a click; stop Space from re-clicking them
   // (the keydown handler above already starts the game).
   $$('button').forEach((b) => b.addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') e.preventDefault(); }));
+
+  // rotating the phone resizes the card, so re-fit the letter
+  window.addEventListener('resize', () => {
+    if (state.screen === 'game') fitLetter($('#letter'), $('#card'));
+  });
 
   applyOptions();
 })();
