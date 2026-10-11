@@ -19,6 +19,9 @@
       pressSpace: 'nebo zmáčkni mezerník',
       prompt: 'Které je to písmenko? Zmáčkni ho!',
       letters2: 'písmenek',
+      inARow: 'v řadě',
+      modeLabel: 'Hra:',
+      timed: '⏱️ na čas', streak: '🔥 v řadě',
       record: '🏆 Nový rekord! 🏆',
       practice: 'Tahle písmenka si ještě procvič:',
       again: 'Znovu!',
@@ -38,6 +41,9 @@
       pressSpace: 'or press the space bar',
       prompt: 'Which letter is it? Press it!',
       letters2: 'letters',
+      inARow: 'in a row',
+      modeLabel: 'Game:',
+      timed: '⏱️ 20 seconds', streak: '🔥 in a row',
       record: '🏆 New record! 🏆',
       practice: 'Practise these letters a bit more:',
       again: 'Again!',
@@ -60,8 +66,9 @@
     accents: store.get('accents', false),
     speak: store.get('speak', true),
     keyboard: store.get('keyboard', touchy),
+    mode: store.get('mode', 'timed'),
   };
-  const bestKey = () => `best.${settings.case}.${settings.accents ? 'acc' : 'plain'}`;
+  const bestKey = () => `best.${settings.case}.${settings.accents ? 'acc' : 'plain'}${settings.mode === 'streak' ? '.streak' : ''}`;
   const t = (k) => TEXT[settings.lang][k];
 
   const $ = (s) => document.querySelector(s);
@@ -277,6 +284,7 @@
     locked: false,
     colorIdx: 0,
     resultsAt: 0,
+    round: 0,
   };
 
   function makePool() {
@@ -344,16 +352,21 @@
   }
 
   function startGame() {
+    state.round++;
     state.score = 0;
     state.streak = 0;
     state.current = null;
     state.missed = new Map();
     $('#score').textContent = '0';
+    const streak = settings.mode === 'streak';
+    $('#game').classList.toggle('streak', streak);
+    $('#scoreIcon').textContent = streak ? '🔥' : '⭐';
     show('game');
     nextLetter();
+    cancelAnimationFrame(state.raf);
+    if (streak) return; // no clock: the round ends on the first mistake
     state.endAt = performance.now() + ROUND_SECONDS * 1000;
     state.lastSecond = null;
-    cancelAnimationFrame(state.raf);
     loop();
   }
 
@@ -399,7 +412,15 @@
       mascotMood('oops');
       const card = $('#card');
       card.classList.remove('wrong', 'in'); void card.offsetWidth; card.classList.add('wrong');
-      if (state.misses >= 2) $('#reveal').classList.add('show');
+      if (settings.mode === 'streak') {
+        // show the right answer for a moment, then the streak is over
+        state.locked = true;
+        $('#reveal').classList.add('show');
+        const round = state.round;
+        setTimeout(() => { if (state.screen === 'game' && state.round === round) endGame(); }, 1600);
+      } else if (state.misses >= 2) {
+        $('#reveal').classList.add('show');
+      }
     }
   }
 
@@ -412,7 +433,10 @@
     const isRecord = score > prev && score > 0;
     if (isRecord) store.set(bestKey(), score);
 
-    const stars = score >= 15 ? 3 : score >= 9 ? 2 : score >= 4 ? 1 : 0;
+    const stars = settings.mode === 'streak'
+      ? (score >= 20 ? 3 : score >= 10 ? 2 : score >= 4 ? 1 : 0)
+      : (score >= 15 ? 3 : score >= 9 ? 2 : score >= 4 ? 1 : 0);
+    $('#scoreUnit').dataset.t = settings.mode === 'streak' ? 'inARow' : 'letters2';
     const titles = t('titles');
     $('#resultTitle').textContent = titles[stars];
     $('#finalScore').textContent = score;
@@ -444,6 +468,7 @@
   document.addEventListener('keydown', (e) => {
     if (e.ctrlKey || e.metaKey) return;
     if (state.screen === 'game') {
+      if (e.key === 'Escape') { cancelAnimationFrame(state.raf); state.current = null; show('start'); applyText(); return; }
       if (e.repeat || e.key.length !== 1 || e.key === ' ') return;
       e.preventDefault();
       guess(e.key);

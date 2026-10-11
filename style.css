@@ -228,6 +228,8 @@ body {
   align-items: center;
   padding-right: 70px;
 }
+#game.streak .timer { visibility: hidden; }
+#game.streak .star-icon { animation: none; }
 .timer { position: relative; width: 92px; height: 92px; }
 .timer svg { width: 100%; height: 100%; transform: rotate(-90deg); }
 .timer-bg { fill: #fff; stroke: rgba(255,255,255,.6); stroke-width: 10; }

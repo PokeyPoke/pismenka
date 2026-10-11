@@ -25,6 +25,13 @@
 
     <div class="options">
       <div class="opt-group">
+        <span class="opt-label" data-t="modeLabel"></span>
+        <div class="seg" data-opt="mode">
+          <button data-val="timed" data-t="timed"></button>
+          <button data-val="streak" data-t="streak"></button>
+        </div>
+      </div>
+      <div class="opt-group">
         <span class="opt-label" data-t="letters"></span>
         <div class="seg" data-opt="case">
           <button data-val="lower" data-t="lower"></button>
@@ -60,7 +67,7 @@
         <span id="timeLeft">20</span>
       </div>
       <div class="score-box">
-        <span class="star-icon">⭐</span><span id="score">0</span>
+        <span class="star-icon" id="scoreIcon">⭐</span><span id="score">0</span>
       </div>
     </div>
 
@@ -80,7 +87,7 @@
   <section id="results" class="screen">
     <div class="mascot-wrap"><svg class="mascot" viewBox="0 0 200 180" aria-hidden="true"></svg></div>
     <h2 class="result-title" id="resultTitle"></h2>
-    <div class="big-score"><span id="finalScore">0</span><small data-t="letters2"></small></div>
+    <div class="big-score"><span id="finalScore">0</span><small id="scoreUnit" data-t="letters2"></small></div>
     <div class="rating" id="rating"><span>★</span><span>★</span><span>★</span></div>
     <p class="record" id="record" data-t="record"></p>
     <div class="practice" id="practice">
