@@ -1,7 +1,6 @@
 (() => {
   'use strict';
 
-  const ROUND_SECONDS = 20;
   const BASE = 'abcdefghijklmnopqrstuvwxyz'.split('');
   const ACCENTED = 'áčďéěíňóřšťúůýž'.split('');
   const COLORS = ['#ff5fa2', '#ff9f1c', '#22b864', '#3fa7ff', '#9b5de5', '#f15bb5', '#00bbf9', '#e36414'];
@@ -18,10 +17,7 @@
       play: 'Hrát!',
       pressSpace: 'nebo zmáčkni mezerník',
       prompt: 'Které je to písmenko? Zmáčkni ho!',
-      letters2: 'písmenek',
       inARow: 'v řadě',
-      modeLabel: 'Hra:',
-      timed: '⏱️ na čas', streak: '🔥 v řadě',
       record: '🏆 Nový rekord! 🏆',
       practice: 'Tahle písmenka si ještě procvič:',
       again: 'Znovu!',
@@ -40,10 +36,7 @@
       play: 'Play!',
       pressSpace: 'or press the space bar',
       prompt: 'Which letter is it? Press it!',
-      letters2: 'letters',
       inARow: 'in a row',
-      modeLabel: 'Game:',
-      timed: '⏱️ 20 seconds', streak: '🔥 in a row',
       record: '🏆 New record! 🏆',
       practice: 'Practise these letters a bit more:',
       again: 'Again!',
@@ -66,9 +59,8 @@
     accents: store.get('accents', false),
     speak: store.get('speak', true),
     keyboard: store.get('keyboard', touchy),
-    mode: store.get('mode', 'timed'),
   };
-  const bestKey = () => `best.${settings.case}.${settings.accents ? 'acc' : 'plain'}${settings.mode === 'streak' ? '.streak' : ''}`;
+  const bestKey = () => `best.${settings.case}.${settings.accents ? 'acc' : 'plain'}.streak`;
   const t = (k) => TEXT[settings.lang][k];
 
   const $ = (s) => document.querySelector(s);
@@ -154,7 +146,6 @@
     bad() { tone(220, 0, 0.18, 'square', 0.07); tone(180, 0.1, 0.22, 'square', 0.07); },
     count() { tone(660, 0, 0.15, 'sine', 0.2); },
     go() { tone(880, 0, 0.3, 'triangle', 0.22); },
-    tick() { tone(1200, 0, 0.05, 'sine', 0.08); },
     end() { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.12, 0.3, 'triangle', 0.2)); },
   };
 
@@ -276,11 +267,7 @@
     current: null,
     score: 0,
     streak: 0,
-    misses: 0,
     missed: new Map(),
-    endAt: 0,
-    raf: 0,
-    lastSecond: null,
     locked: false,
     colorIdx: 0,
     resultsAt: 0,
@@ -313,7 +300,6 @@
     do { ch = state.pool[Math.floor(Math.random() * state.pool.length)]; }
     while (state.pool.length > 1 && ch === state.current);
     state.current = ch;
-    state.misses = 0;
     state.colorIdx = (state.colorIdx + 1 + Math.floor(Math.random() * (COLORS.length - 1))) % COLORS.length;
 
     const card = $('#card');
@@ -358,33 +344,8 @@
     state.current = null;
     state.missed = new Map();
     $('#score').textContent = '0';
-    const streak = settings.mode === 'streak';
-    $('#game').classList.toggle('streak', streak);
-    $('#scoreIcon').textContent = streak ? '🔥' : '⭐';
     show('game');
     nextLetter();
-    cancelAnimationFrame(state.raf);
-    if (streak) return; // no clock: the round ends on the first mistake
-    state.endAt = performance.now() + ROUND_SECONDS * 1000;
-    state.lastSecond = null;
-    loop();
-  }
-
-  const RING = 2 * Math.PI * 44;
-  function loop() {
-    const left = Math.max(0, state.endAt - performance.now());
-    const secs = Math.ceil(left / 1000);
-    $('#timeLeft').textContent = secs;
-    $('#timerRing').style.strokeDashoffset = RING * (1 - left / (ROUND_SECONDS * 1000));
-    const timer = $('.timer');
-    timer.classList.toggle('warn', secs <= 10 && secs > 5);
-    timer.classList.toggle('danger', secs <= 5);
-    if (secs !== state.lastSecond) {
-      if (secs <= 5 && secs > 0 && state.lastSecond !== null) sfx.tick();
-      state.lastSecond = secs;
-    }
-    if (left <= 0) { endGame(); return; }
-    state.raf = requestAnimationFrame(loop);
   }
 
   function guess(key) {
@@ -406,26 +367,20 @@
       setTimeout(() => { if (state.screen === 'game') nextLetter(); }, 220);
     } else {
       state.streak = 0;
-      state.misses++;
       state.missed.set(target, (state.missed.get(target) || 0) + 1);
       sfx.bad();
       mascotMood('oops');
       const card = $('#card');
       card.classList.remove('wrong', 'in'); void card.offsetWidth; card.classList.add('wrong');
-      if (settings.mode === 'streak') {
-        // show the right answer for a moment, then the streak is over
-        state.locked = true;
-        $('#reveal').classList.add('show');
-        const round = state.round;
-        setTimeout(() => { if (state.screen === 'game' && state.round === round) endGame(); }, 1600);
-      } else if (state.misses >= 2) {
-        $('#reveal').classList.add('show');
-      }
+      // show the right answer for a moment, then the streak is over
+      state.locked = true;
+      $('#reveal').classList.add('show');
+      const round = state.round;
+      setTimeout(() => { if (state.screen === 'game' && state.round === round) endGame(); }, 1600);
     }
   }
 
   function endGame() {
-    cancelAnimationFrame(state.raf);
     state.current = null;
     sfx.end();
     const score = state.score;
@@ -433,10 +388,7 @@
     const isRecord = score > prev && score > 0;
     if (isRecord) store.set(bestKey(), score);
 
-    const stars = settings.mode === 'streak'
-      ? (score >= 20 ? 3 : score >= 10 ? 2 : score >= 4 ? 1 : 0)
-      : (score >= 15 ? 3 : score >= 9 ? 2 : score >= 4 ? 1 : 0);
-    $('#scoreUnit').dataset.t = settings.mode === 'streak' ? 'inARow' : 'letters2';
+    const stars = score >= 20 ? 3 : score >= 10 ? 2 : score >= 4 ? 1 : 0;
     const titles = t('titles');
     $('#resultTitle').textContent = titles[stars];
     $('#finalScore').textContent = score;
@@ -468,7 +420,7 @@
   document.addEventListener('keydown', (e) => {
     if (e.ctrlKey || e.metaKey) return;
     if (state.screen === 'game') {
-      if (e.key === 'Escape') { cancelAnimationFrame(state.raf); state.current = null; show('start'); applyText(); return; }
+      if (e.key === 'Escape') { state.current = null; show('start'); applyText(); return; }
       if (e.repeat || e.key.length !== 1 || e.key === ' ') return;
       e.preventDefault();
       guess(e.key);
